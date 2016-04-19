@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+ 
+<mapper namespace="pork">
+     
+     <select id="userLogin" parameterType="hashmap" resultType="hashmap">
+        <![CDATA[
+            SELECT
+                   email,
+                   cellPhone,
+                   name,
+                   birth,
+                   address,
+                   addressDetail,
+                   useNavi,
+                   autoRecommand,
+                   pushRecv
+                   
+              FROM
+                users
+             WHERE email = #{email}
+               AND pwd = #{pwd}
+        ]]>
+    </select>
+    
+    <select id="checkUser" parameterType="hashmap" resultType="hashmap">
+        <![CDATA[
+            SELECT
+                   COUNT(*) count
+                   
+              FROM
+                   users
+             WHERE email = #{email}
+        ]]>
+    </select>
+    
+    <insert id="joinUser" parameterType="hashmap">
+        <![CDATA[
+            INSERT users
+ 			       (           
+                   email,
+                   pwd,
+                   name,
+                   cellPhone,
+                   birth,
+                   useNavi,
+                   autoRecommand,
+                   pushRecv,
+                   inst_dt,
+                   updt_dt
+                   )
+              VALUES
+                   (
+                   #{email},
+                   #{pwd},
+                   #{name},
+                   #{cellPhone},
+                   #{birth},
+                   #{useNavi},
+                   #{autoRecommand},
+                   #{pushRecv},
+                   now(),
+                   now()
+                   )
+        ]]>
+    </insert>
+    
+</mapper>
