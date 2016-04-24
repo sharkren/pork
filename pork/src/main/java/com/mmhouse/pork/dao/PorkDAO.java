@@ -9,7 +9,12 @@ import org.springframework.stereotype.Repository;
 
 
 
+
+
+
+
 import com.mmhouse.pork.common.dao.*;
+import com.mmhouse.pork.vo.UserVO;
  
 @Repository("porkDAO")
 public class PorkDAO extends AbstractDAO{
@@ -18,9 +23,10 @@ public class PorkDAO extends AbstractDAO{
 	 * 로그인 처리
 	 */
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> userLogin(Map<String, Object> commandMap) {
+	//public Map<String, Object> userLogin(Map<String, Object> commandMap) {
+	public UserVO userLogin(UserVO userVo) {
 		// TODO Auto-generated method stub
-		return (Map<String, Object>)selectOne("pork.userLogin", commandMap);
+		return (UserVO)selectOne("pork.userLogin", userVo);
 	}
 	
 	/*
@@ -39,5 +45,20 @@ public class PorkDAO extends AbstractDAO{
 	public int joinUser(Map<String, Object> commandMap) {
 		// TODO Auto-generated method stub
 		return (int)insert("pork.joinUser", commandMap); 
+	}
+
+	public int writeContent(Map<String, Object> commandMap) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public int writeContentMedia(Map<String, Object> commandMap) {
+		// TODO Auto-generated method stub
+		return 0;
+	}
+
+	public Map<String, Object> getContId(Map<String, Object> commandMap) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 }

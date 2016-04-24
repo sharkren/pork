@@ -3,7 +3,7 @@
  
 <mapper namespace="pork">
      
-     <select id="userLogin" parameterType="hashmap" resultType="hashmap">
+     <select id="userLogin" parameterType="com.mmhouse.pork.vo.UserVO" resultType="com.mmhouse.pork.vo.UserVO">
         <![CDATA[
             SELECT
                    email,
@@ -64,5 +64,73 @@
                    )
         ]]>
     </insert>
+    
+    <insert id="writeContents" parameterType="hashmap">
+        <![CDATA[
+            INSERT contents
+ 			       (           
+                   contType,
+                   email,
+                   contTitle,
+                   contMemo,
+                   secretYn,
+                   address,
+                   latitude,
+                   longitude,
+                   inst_dt,
+                   updt_dt
+                   )
+              VALUES
+                   (
+                   #{contType},
+                   #{email},
+                   #{contTitle},
+                   #{contMemo},
+                   #{secretYn},
+                   #{address},
+                   #{latitude},
+                   #{longitude},
+                   now(),
+                   now()
+                   )
+        ]]>
+    </insert>
+    
+    
+    <insert id="writeContentsMedia" parameterType="hashmap">
+        <![CDATA[
+            INSERT writeContentMedia
+ 			       (   
+ 			       contId,        
+                   contType,
+                   mediaId,
+                   mediaName,
+                   mediaSize,
+                   address,
+                   latitude,
+                   longitude
+                   )
+              VALUES
+                   (
+                   #{contId},
+                   #{contType},
+                   #{mediaId},
+                   #{mediaName},
+                   #{mediaSize},
+                   #{address},
+                   #{latitude},
+                   #{longitude}
+                   )
+        ]]>
+    </insert>
+    
+    <select id="getContId" parameterType="hashmap" resultType="hashmap">
+        <![CDATA[
+            SELECT
+                   MAX(contId) as contId
+              FROM contents
+             WHERE email = #{email}
+        ]]>
+    </select>
     
 </mapper>

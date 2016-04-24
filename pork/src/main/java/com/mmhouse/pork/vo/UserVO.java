@@ -1,8 +1,19 @@
 package com.mmhouse.pork.vo;
 
-public class userVO {
+import org.apache.ibatis.type.Alias;
+
+@Alias("com.mmhouse.pork.vo.UserVO")
+public class UserVO {
 	
 	private String email;
+	private String pwd;
+	private String cellPhone;
+	private String address;
+	private String addressDetail;
+	private String userNavi;
+	private String autoRecommand;
+	private String pushRecv;
+	
 	public String getEmail() {
 		return email;
 	}
@@ -51,14 +62,5 @@ public class userVO {
 	public void setPushRecv(String pushRecv) {
 		this.pushRecv = pushRecv;
 	}
-	private String pwd;
-	private String cellPhone;
-	private String address;
-	private String addressDetail;
-	private String userNavi;
-	private String autoRecommand;
-	private String pushRecv;
-	
-	
 	
 }

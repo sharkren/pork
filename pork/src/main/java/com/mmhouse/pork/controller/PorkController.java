@@ -1,16 +1,8 @@
 package com.mmhouse.pork.controller;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.sql.SQLIntegrityConstraintViolationException;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
@@ -19,26 +11,25 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.log4j.Logger;
 import org.json.JSONObject;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.servlet.ModelAndView;
-import org.springframework.web.util.UriComponentsBuilder;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.mmhouse.pork.controller.util.Util;
 import com.mmhouse.pork.service.PorkService;
-import com.mmhouse.pork.vo.CommandMap;
-import com.mmhouse.pork.vo.userVO;
+import com.mmhouse.pork.vo.UserVO;
 
 @Controller
 public class PorkController {
 	
 	Logger log = Logger.getLogger(this.getClass());
     
+	private UserVO user;;
+	private Util util = new Util();
+	private Gson gson = new Gson();
+	
     @Resource(name="porkService")
     private PorkService porkService;
     
@@ -62,80 +53,60 @@ public class PorkController {
         
     	log.info("PORK_LOG >>> userLogin STRAT >>> ");
     	
-    	// Request 객체에서 JSON Parameter 추출
     	String param = null;
-        StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader bufferedReader = null;
-        
-        try {
-            InputStream inputStream = request.getInputStream();
-            if (inputStream != null) {
-                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                char[] charBuffer = new char[128];
-                int bytesRead = -1;
-                while ((bytesRead = bufferedReader.read(charBuffer)) > 0) {
-                    stringBuilder.append(charBuffer, 0, bytesRead);
-                }
-            }
-        } catch (IOException ex) {
-            throw ex;
-        } finally {
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (IOException ex) {
-                    throw ex;
-                }
-            }
-        }
- 
-        param = stringBuilder.toString();
+        param = util.getReqData(request);
         
         log.debug("PORK_LOG >>> userLogin Request param  \t:  " + param);
         
-    	// API형대로 제공될 것이므로 JSON 타입으로 요청받은 정보를 서비스에 맞게 Map 데이터로 변경함
-    	JSONObject jObj = new JSONObject(param); // this parses the json
-    	Iterator it = jObj.keys(); //gets all the keys
-    	
-    	Map<String, Object> commandMap = (Map<String, Object>)new HashMap();
-    	
-    	while(it.hasNext()) {
-    		
-    	    String key = String.valueOf(it.next()); // 키
-    	    Object o = jObj.get(key);               // 키값 
-    	    commandMap.put(key, o);                 // param으로 저장
-
-    	} 
-    	
-        // 처리 결과 리턴 값
-        Map<String,Object> userInfo = porkService.userLogin(commandMap);
+        UserVO userVo = gson.fromJson(param, UserVO.class);
         
-        //Gson gson = new Gson();
         JsonObject json = null; 
         
-        if (userInfo != null) {
-        	log.info("PORK_LOG >>> userLogin Response Param [" + userInfo.toString() + "]");
+        try {
         	
-        	// Map Data를 JSON 값으로 치환
-        	//String mapString = gson.toJson(userInfo.toString());
-        	//log.info("PORK_LOG >>> userLogin Response mapString [" + mapString + "]");
-        	
-        	json = new JsonParser().parse(userInfo.toString()).getAsJsonObject();
-        	
-        	//json = (JsonObject) new JsonParser().parse(mapString);
-        	log.info("PORK_LOG >>> userLogin Response json [" + json.toString() + "]");
-        	json.addProperty("result_mgs", "success");
-        	json.addProperty("result_code", "0000");
+        	UserVO userInfo = null;
+             if ( !"".equals(userVo.getEmail()) && !"".equals(userVo.getPwd()) ) {
+             	userInfo = porkService.userLogin(userVo);
+
+             	if (userInfo != null) {
+             		// Return Data를 Json String으로 변환
+             		String jsonString = new Gson().toJson(userInfo);
+                	log.info("PORK_LOG >>> userLogin Response Param [" + jsonString.toString() + "]");
+                	json = new JsonParser().parse(jsonString).getAsJsonObject();
+                	log.info("PORK_LOG >>> userLogin Response json [" + json.toString() + "]");
+                	json.addProperty("result_mgs", "success");
+                	json.addProperty("result_code", "0000");
+                }
+                else {
+                	json = new JsonObject();
+                	json.addProperty("result_mgs", "data not found");
+                	json.addProperty("result_code", "9999");
+                }
+             }
+             else {
+             	json = new JsonObject();
+             	json.addProperty("result_mgs", "로그인 정보가 부족합니다.");
+             	json.addProperty("result_code", "9999");
+             	
+             }
+             
         }
-        else {
-        	json = new JsonObject();
-        	json.addProperty("result_mgs", "data not found");
+        catch (Exception e) {
+        	e.printStackTrace();
+        	
+        	if (json == null) {
+        		json = new JsonObject();
+        	}
+        	
+        	json.addProperty("result_mgs", e.getMessage());
         	json.addProperty("result_code", "9999");
         }
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(json.toString());
+        finally {
+        	
+        	response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(json.toString());
+        }
         
         log.info("PORK_LOG >>> userLogin END >>>");
         
@@ -148,42 +119,17 @@ public class PorkController {
      * @throws Exception
      * @since  2016.03.27
      * @author thomas
+     * @return 
      * @refer url : http://addio3305.tistory.com/79
      * Description 사용자가 이미 등록되었는지 회원가입시 체크
      */
     @RequestMapping(value="/api/checkUser.do", method = RequestMethod.POST)
-    public void checkUser(HttpServletRequest request, HttpServletResponse response) throws Exception{
+    public void checkUser(HttpServletRequest request, HttpServletResponse response) throws Exception {
         
     	log.info("PORK_LOG >>> checkUser STRAT >>> ");
-    	
-    	// Request 객체에서 JSON Parameter 추출
+    	    	
     	String param = null;
-        StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader bufferedReader = null;
-        
-        try {
-            InputStream inputStream = request.getInputStream();
-            if (inputStream != null) {
-                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                char[] charBuffer = new char[128];
-                int bytesRead = -1;
-                while ((bytesRead = bufferedReader.read(charBuffer)) > 0) {
-                    stringBuilder.append(charBuffer, 0, bytesRead);
-                }
-            }
-        } catch (IOException ex) {
-            throw ex;
-        } finally {
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (IOException ex) {
-                    throw ex;
-                }
-            }
-        }
- 
-        param = stringBuilder.toString();
+        param = util.getReqData(request);
         
         log.debug("PORK_LOG >>> checkUser Request param  \t:  " + param);
         
@@ -199,25 +145,31 @@ public class PorkController {
     	    Object o = jObj.get(key);               // 키값 
     	    commandMap.put(key, o);                 // param으로 저장
 
-    	}
+    	} 
     	
-        // 처리 결과 리턴 값
-        Map<String,Object> userInfo = porkService.checkUser(commandMap);
+    	// 처리 결과 리턴 값
+        Map<String,Object> retMap = porkService.checkUser(commandMap);
         
-        if (userInfo != null) {
-        	log.info("PORK_LOG >>> checkUser Response Param [" + userInfo.toString() + "]");
-        	
-        	// Map Data를 JSON 값으로 치환
-        	JSONObject json = new JSONObject(userInfo.toString());
-            
-            response.setContentType("application/json");
-            response.setCharacterEncoding("UTF-8");
-            response.getWriter().write(json.toString());
-            
+        JsonObject json = null; 
+        
+        if (retMap != null) {
+        	log.info("PORK_LOG >>> checkUser Response Param [" + retMap.toString() + "]");
+        	json = new JsonParser().parse(retMap.toString()).getAsJsonObject();
+        	log.info("PORK_LOG >>> checkUser Response json [" + json.toString() + "]");
+        	json.addProperty("result_mgs", "success");
+        	json.addProperty("result_code", "0000");
+        }
+        else {
+        	json = new JsonObject();
+        	json.addProperty("result_mgs", "data not found");
+        	json.addProperty("result_code", "9999");
         }
         
-        log.info("PORK_LOG >>> checkUser END >>>");
+        response.setContentType("application/json");
+        response.setCharacterEncoding("UTF-8");
+        response.getWriter().write(json.toString());
         
+        log.info("PORK_LOG >>> checkUser END >>>");
     }
     
     /**
@@ -237,32 +189,8 @@ public class PorkController {
     	
     	// Request 객체에서 JSON Parameter 추출
     	String param = null;
-        StringBuilder stringBuilder = new StringBuilder();
-        BufferedReader bufferedReader = null;
         
-        try {
-            InputStream inputStream = request.getInputStream();
-            if (inputStream != null) {
-                bufferedReader = new BufferedReader(new InputStreamReader(inputStream));
-                char[] charBuffer = new char[128];
-                int bytesRead = -1;
-                while ((bytesRead = bufferedReader.read(charBuffer)) > 0) {
-                    stringBuilder.append(charBuffer, 0, bytesRead);
-                }
-            }
-        } catch (IOException ex) {
-            throw ex;
-        } finally {
-            if (bufferedReader != null) {
-                try {
-                    bufferedReader.close();
-                } catch (IOException ex) {
-                    throw ex;
-                }
-            }
-        }
- 
-        param = stringBuilder.toString();
+        param = util.getReqData(request);
         
         log.debug("PORK_LOG >>> joinUser Request param  \t:  " + param);
         
@@ -311,6 +239,63 @@ public class PorkController {
         
         log.info("PORK_LOG >>> joinUser END >>>");
         
+    }
+    
+    /**
+     * 
+     * @param commandMap
+     * @return Map
+     * @throws Exception
+     * @since  2016.04.03
+     * @author thomas
+     * @refer url : http://addio3305.tistory.com/79
+     * Description : 콘텐츠 등록처리
+     */
+    @RequestMapping(value="/api/writeContent.do", method = RequestMethod.POST)
+    public void writeContent(HttpServletRequest request, HttpServletResponse response) throws Exception{
+    	log.info("PORK_LOG >>> writeContent STRAT >>> ");
+    	
+    	String param = null;
+        
+        param = util.getReqData(request);
+        
+        log.debug("PORK_LOG >>> writeContent Request param  \t:  " + param);
+        
+        // API형대로 제공될 것이므로 JSON 타입으로 요청받은 정보를 서비스에 맞게 Map 데이터로 변경함
+    	JSONObject jObj = new JSONObject(param); // this parses the json
+    	Iterator it = jObj.keys(); //gets all the keys
+    	
+    	Map<String, Object> commandMap = (Map<String, Object>)new HashMap();
+    	
+    	while(it.hasNext()) {
+    		
+    	    String key = String.valueOf(it.next()); // 키
+    	    Object o = jObj.get(key);               // 키값 
+    	    commandMap.put(key, o);                 // param으로 저장
+
+    	} 
+    	
+    	int wirteResult = 0;
+    	Map<String,Object> retMap;
+    	
+    	// contents table에 데이터 등록
+    	wirteResult = porkService.writeContent(commandMap);
+        
+    	if (wirteResult == 1) {
+    		
+	        // 등록된 table에서 contents id 조회
+	        retMap = porkService.getContId(commandMap);
+	        commandMap.put("contId", retMap.get("contId"));
+	        
+	        // 조회된 content id로 contents_media 테이블 데이터 등록
+	        wirteResult = porkService.writeContentMedia(commandMap);
+        
+    	}
+    	
+        // 최종 결과 return
+        
+    	log.info("PORK_LOG >>> writeContent END >>> ");
+    	
     }
 }
 
