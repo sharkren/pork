@@ -13,7 +13,11 @@ import org.springframework.stereotype.Repository;
 
 
 
+
+
 import com.mmhouse.pork.common.dao.*;
+import com.mmhouse.pork.vo.ContentsMediaVO;
+import com.mmhouse.pork.vo.ContentsVO;
 import com.mmhouse.pork.vo.UserVO;
  
 @Repository("porkDAO")
@@ -46,19 +50,28 @@ public class PorkDAO extends AbstractDAO{
 		// TODO Auto-generated method stub
 		return (int)insert("pork.joinUser", commandMap); 
 	}
-
-	public int writeContent(Map<String, Object> commandMap) {
+	
+	/*
+	 * 콘텐츠 등록
+	 */
+	public int writeContent(ContentsVO contentsVo) {
 		// TODO Auto-generated method stub
-		return 0;
+		return (int)insert("pork.writeContent", contentsVo);
+	}
+	
+	/*
+	 * 콘텐츠 첨부파일 등록
+	 */
+	public int writeContentMedia(ContentsMediaVO contentsMediaVo) {
+		// TODO Auto-generated method stub
+		return (int)insert("pork.writeContentMedia", contentsMediaVo);
 	}
 
-	public int writeContentMedia(Map<String, Object> commandMap) {
+	/*
+	 * 콘텐츠 ID조회
+	 */
+	public Map<String, Object> getContId(ContentsVO contentsV0) {
 		// TODO Auto-generated method stub
-		return 0;
-	}
-
-	public Map<String, Object> getContId(Map<String, Object> commandMap) {
-		// TODO Auto-generated method stub
-		return null;
+		return (Map<String, Object>)selectOne("pork.getContId", contentsV0);
 	}
 }

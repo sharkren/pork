@@ -2,6 +2,9 @@ package com.mmhouse.pork.vo;
 
 import java.util.List;
 
+import org.apache.ibatis.type.Alias;
+
+@Alias("com.mmhouse.pork.vo.ContentsVO")
 public class ContentsVO {
 	
 	private String contId;

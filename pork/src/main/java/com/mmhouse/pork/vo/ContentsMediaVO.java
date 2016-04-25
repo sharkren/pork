@@ -1,5 +1,8 @@
 package com.mmhouse.pork.vo;
 
+import org.apache.ibatis.type.Alias;
+
+@Alias("com.mmhouse.pork.vo.ContentsMediaVO")
 public class ContentsMediaVO {
 	
 	private String contId;

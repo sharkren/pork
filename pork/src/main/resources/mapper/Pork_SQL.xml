@@ -46,8 +46,8 @@
                    useNavi,
                    autoRecommand,
                    pushRecv,
-                   inst_dt,
-                   updt_dt
+                   instDt,
+                   updtDt
                    )
               VALUES
                    (
@@ -65,7 +65,7 @@
         ]]>
     </insert>
     
-    <insert id="writeContents" parameterType="hashmap">
+    <insert id="writeContent" parameterType="com.mmhouse.pork.vo.ContentsVO">
         <![CDATA[
             INSERT contents
  			       (           
@@ -77,8 +77,8 @@
                    address,
                    latitude,
                    longitude,
-                   inst_dt,
-                   updt_dt
+                   instDt,
+                   updtDt
                    )
               VALUES
                    (
@@ -97,9 +97,9 @@
     </insert>
     
     
-    <insert id="writeContentsMedia" parameterType="hashmap">
+    <insert id="writeContentMedia" parameterType="com.mmhouse.pork.vo.ContentsMediaVO">
         <![CDATA[
-            INSERT writeContentMedia
+            INSERT contents_media
  			       (   
  			       contId,        
                    contType,
@@ -124,7 +124,7 @@
         ]]>
     </insert>
     
-    <select id="getContId" parameterType="hashmap" resultType="hashmap">
+    <select id="getContId" parameterType="com.mmhouse.pork.vo.ContentsVO" resultType="hashmap">
         <![CDATA[
             SELECT
                    MAX(contId) as contId

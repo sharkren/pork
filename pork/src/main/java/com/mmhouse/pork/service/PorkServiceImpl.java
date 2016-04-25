@@ -8,6 +8,8 @@ import javax.annotation.Resource;
 import org.springframework.stereotype.Service;
 
 import com.mmhouse.pork.dao.PorkDAO;
+import com.mmhouse.pork.vo.ContentsMediaVO;
+import com.mmhouse.pork.vo.ContentsVO;
 import com.mmhouse.pork.vo.UserVO;
  
 @Service("porkService")
@@ -49,18 +51,18 @@ public class PorkServiceImpl implements PorkService {
 	 * content 등록
 	 */
 	@Override
-	public int writeContent(Map<String, Object> commandMap) {
+	public int writeContent(ContentsVO contentsVo) {
 		// TODO Auto-generated method stub
-		return porkDAO.writeContent(commandMap);
+		return porkDAO.writeContent(contentsVo);
 	}
 	
 	/*
 	 * content id 조회
 	 */
 	@Override
-	public Map<String, Object> getContId(Map<String, Object> commandMap) {
+	public Map<String, Object> getContId(ContentsVO contentsVo) {
 		// TODO Auto-generated method stub
-		return porkDAO.getContId(commandMap);
+		return porkDAO.getContId(contentsVo);
 	}
 	
 	
@@ -68,9 +70,9 @@ public class PorkServiceImpl implements PorkService {
 	 * content media등록 
 	 */
 	@Override
-	public int writeContentMedia(Map<String, Object> commandMap) {
+	public int writeContentMedia(ContentsMediaVO contentsMediaVo) {
 		// TODO Auto-generated method stub
-		return porkDAO.writeContentMedia(commandMap);
+		return porkDAO.writeContentMedia(contentsMediaVo);
 	}
 	
 }

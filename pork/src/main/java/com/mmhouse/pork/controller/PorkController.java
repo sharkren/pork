@@ -2,6 +2,7 @@ package com.mmhouse.pork.controller;
 
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 
 import javax.annotation.Resource;
@@ -19,6 +20,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.mmhouse.pork.controller.util.Util;
 import com.mmhouse.pork.service.PorkService;
+import com.mmhouse.pork.vo.ContentsMediaVO;
+import com.mmhouse.pork.vo.ContentsVO;
 import com.mmhouse.pork.vo.UserVO;
 
 @Controller
@@ -110,6 +113,106 @@ public class PorkController {
         
         log.info("PORK_LOG >>> userLogin END >>>");
         
+    }
+    
+    /**
+     * 
+     * @param commandMap
+     * @return Map
+     * @throws Exception
+     * @since  2016.04.03
+     * @author thomas
+     * @refer url : http://addio3305.tistory.com/79
+     * Description : 콘텐츠 등록처리
+     */
+    @RequestMapping(value="/api/writeContent.do", method = RequestMethod.POST)
+    public void writeContent(HttpServletRequest request, HttpServletResponse response) throws Exception{
+    	log.info("PORK_LOG >>> writeContent STRAT >>> ");
+    	
+    	String param = null;
+        
+        param = util.getReqData(request);
+        
+        log.debug("PORK_LOG >>> writeContent Request param  \t:  " + param);
+        
+        // Contents Data 추출
+        ContentsVO contentsVo = gson.fromJson(param, ContentsVO.class);
+        
+        log.debug("PORK_LOG >>> writeContent contentsVo string  \t:  " + gson.toJson(contentsVo).toString());
+        
+        // Media Data 리스트 추출
+        List<ContentsMediaVO> contMediaList = (List<ContentsMediaVO>)contentsVo.getContentsMedia();
+        
+        JsonObject json = null; 
+        
+        try {
+        	        	
+        	int wirteResult = 0;
+        	Map<String,Object> retMap;
+        	
+        	// contents table에 데이터 등록
+        	try {
+        		wirteResult = porkService.writeContent(contentsVo);
+        	}
+        	catch (Exception e){
+        		e.printStackTrace();
+        	}
+            
+        	log.debug("PORK_LOG >>> writeContent wirteResult  \t:  " + wirteResult);
+        	
+        	if (wirteResult == 1) {
+        		
+        		// 등록된 table에서 contents id 조회
+    	        retMap = porkService.getContId(contentsVo);        	
+        		
+        		if (contMediaList.size() > 0) {
+        			
+        			Iterator it = contMediaList.iterator();
+            		
+                	while(it.hasNext()) {
+                		
+                		ContentsMediaVO contentsMediaVo = (ContentsMediaVO)it.next();
+                		contentsMediaVo.setContId(String.valueOf(retMap.get("contId")));
+                		contentsMediaVo.setContType(contentsVo.getContType());
+                		
+                		// 조회된 content id로 contents_media 테이블 데이터 등록
+            	        wirteResult = porkService.writeContentMedia(contentsMediaVo);
+
+                	}
+                	
+                	json = new JsonObject();
+                	json.addProperty("result_mgs", "success");
+                	json.addProperty("result_code", "9999");
+                	
+        		}
+        	}
+        	else {
+        		json = new JsonObject();
+            	json.addProperty("result_mgs", "Contents Upload Fail");
+            	json.addProperty("result_code", "9999");
+        	}
+        }
+        catch (Exception e) {
+        	e.printStackTrace();
+        	
+        	if (json == null) {
+        		json = new JsonObject();
+        	}
+        	
+        	json.addProperty("result_mgs", e.getMessage());
+        	json.addProperty("result_code", "9999");
+        }
+        finally {
+        	response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(json.toString());
+        }
+        
+    	
+        // 최종 결과 return
+        
+    	log.info("PORK_LOG >>> writeContent END >>> ");
+    	
     }
     
     /**
@@ -241,61 +344,6 @@ public class PorkController {
         
     }
     
-    /**
-     * 
-     * @param commandMap
-     * @return Map
-     * @throws Exception
-     * @since  2016.04.03
-     * @author thomas
-     * @refer url : http://addio3305.tistory.com/79
-     * Description : 콘텐츠 등록처리
-     */
-    @RequestMapping(value="/api/writeContent.do", method = RequestMethod.POST)
-    public void writeContent(HttpServletRequest request, HttpServletResponse response) throws Exception{
-    	log.info("PORK_LOG >>> writeContent STRAT >>> ");
-    	
-    	String param = null;
-        
-        param = util.getReqData(request);
-        
-        log.debug("PORK_LOG >>> writeContent Request param  \t:  " + param);
-        
-        // API형대로 제공될 것이므로 JSON 타입으로 요청받은 정보를 서비스에 맞게 Map 데이터로 변경함
-    	JSONObject jObj = new JSONObject(param); // this parses the json
-    	Iterator it = jObj.keys(); //gets all the keys
-    	
-    	Map<String, Object> commandMap = (Map<String, Object>)new HashMap();
-    	
-    	while(it.hasNext()) {
-    		
-    	    String key = String.valueOf(it.next()); // 키
-    	    Object o = jObj.get(key);               // 키값 
-    	    commandMap.put(key, o);                 // param으로 저장
-
-    	} 
-    	
-    	int wirteResult = 0;
-    	Map<String,Object> retMap;
-    	
-    	// contents table에 데이터 등록
-    	wirteResult = porkService.writeContent(commandMap);
-        
-    	if (wirteResult == 1) {
-    		
-	        // 등록된 table에서 contents id 조회
-	        retMap = porkService.getContId(commandMap);
-	        commandMap.put("contId", retMap.get("contId"));
-	        
-	        // 조회된 content id로 contents_media 테이블 데이터 등록
-	        wirteResult = porkService.writeContentMedia(commandMap);
-        
-    	}
-    	
-        // 최종 결과 return
-        
-    	log.info("PORK_LOG >>> writeContent END >>> ");
-    	
-    }
+    
 }
 
