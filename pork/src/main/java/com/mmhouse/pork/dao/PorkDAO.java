@@ -37,18 +37,18 @@ public class PorkDAO extends AbstractDAO{
 	 * 회원가입 이메일 중복 체크
 	 */
 	@SuppressWarnings("unchecked")
-	public Map<String, Object> checkUser(Map<String, Object> commandMap) {
+	public int checkUser(UserVO userVo) {
 		// TODO Auto-generated method stub
-		return (Map<String, Object>)selectOne("pork.checkUser", commandMap);
+		return (int)selectOne("pork.checkUser", userVo);
 	}
 	
 	/*
 	 * 회원가입 처리
 	 */
 	@SuppressWarnings("unchecked")
-	public int joinUser(Map<String, Object> commandMap) {
+	public int joinUser(UserVO userVo) {
 		// TODO Auto-generated method stub
-		return (int)insert("pork.joinUser", commandMap); 
+		return (int)insert("pork.joinUser", userVo); 
 	}
 	
 	/*

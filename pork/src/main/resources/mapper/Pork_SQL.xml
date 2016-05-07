@@ -23,11 +23,10 @@
         ]]>
     </select>
     
-    <select id="checkUser" parameterType="hashmap" resultType="hashmap">
+    <select id="checkUser" parameterType="hashmap" resultType="java.lang.Integer">
         <![CDATA[
             SELECT
                    COUNT(*) count
-                   
               FROM
                    users
              WHERE email = #{email}

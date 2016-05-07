@@ -40,6 +40,20 @@
     	p:viewClass="org.springframework.web.servlet.view.JstlView" 
     	p:prefix="/WEB-INF/jsp/pork/" p:suffix=".jsp">
    	</bean>
+   	
+   	<!-- MultipartResolver 설정 -->
+    <bean id="multipartResolver" class="org.springframework.web.multipart.commons.CommonsMultipartResolver">
+        <property name="maxUploadSize" value="100000000" />
+        <property name="maxInMemorySize" value="100000000" />
+        <!-- <property name="uploadTempDir" ref="uploadDirResource" /> -->     
+    </bean>
+    
+    <!-- <bean id="uploadDirResource" class="org.springframework.core.io.FileSystemResource">
+        <constructor-arg>
+            <value>E:/file/upload/</value>
+        </constructor-arg>
+    </bean>
+    -->
 </beans>
 
 

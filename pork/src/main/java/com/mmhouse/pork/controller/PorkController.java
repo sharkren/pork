@@ -14,6 +14,8 @@ import org.json.JSONObject;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.multipart.MultipartHttpServletRequest;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
@@ -43,8 +45,8 @@ public class PorkController {
     
     /**
      * 
-     * @param commandMap
-     * @return Map
+     * @param request
+     * @return response
      * @throws Exception
      * @since  2016.03.27
      * @author thomas
@@ -63,7 +65,7 @@ public class PorkController {
         
         UserVO userVo = gson.fromJson(param, UserVO.class);
         
-        JsonObject json = null; 
+        JsonObject json =  new JsonObject();; 
         
         try {
         	
@@ -78,31 +80,29 @@ public class PorkController {
                 	json = new JsonParser().parse(jsonString).getAsJsonObject();
                 	log.info("PORK_LOG >>> userLogin Response json [" + json.toString() + "]");
                 	json.addProperty("result_mgs", "success");
-                	json.addProperty("result_code", "0000");
+                	json.addProperty("result_code", "S0000");
                 }
                 else {
-                	json = new JsonObject();
+                	
                 	json.addProperty("result_mgs", "data not found");
-                	json.addProperty("result_code", "9999");
+                	json.addProperty("result_code", "E0001");
                 }
              }
              else {
-             	json = new JsonObject();
+             	
              	json.addProperty("result_mgs", "로그인 정보가 부족합니다.");
-             	json.addProperty("result_code", "9999");
+             	json.addProperty("result_code", "E0002");
              	
              }
              
         }
         catch (Exception e) {
-        	e.printStackTrace();
-        	
-        	if (json == null) {
-        		json = new JsonObject();
-        	}
         	
         	json.addProperty("result_mgs", e.getMessage());
         	json.addProperty("result_code", "9999");
+        	log.debug("PORK_LOG >>> 로그인 오류", e.getCause());
+        	log.debug("PORK_LOG >>> 로그인 오류" + e.getMessage());
+        	e.printStackTrace();
         }
         finally {
         	
@@ -117,90 +117,40 @@ public class PorkController {
     
     /**
      * 
-     * @param commandMap
-     * @return Map
+     * @param request
+     * @return response
      * @throws Exception
      * @since  2016.04.03
-     * @author thomas
-     * @refer url : http://addio3305.tistory.com/79
+     * @author thomas 
      * Description : 콘텐츠 등록처리
      */
     @RequestMapping(value="/api/writeContent.do", method = RequestMethod.POST)
-    public void writeContent(HttpServletRequest request, HttpServletResponse response) throws Exception{
+    public void writeContent(HttpServletRequest  request, HttpServletResponse response) throws Exception {
+    	
     	log.info("PORK_LOG >>> writeContent STRAT >>> ");
     	
-    	String param = null;
-        
-        param = util.getReqData(request);
-        
-        log.debug("PORK_LOG >>> writeContent Request param  \t:  " + param);
-        
-        // Contents Data 추출
-        ContentsVO contentsVo = gson.fromJson(param, ContentsVO.class);
-        
-        log.debug("PORK_LOG >>> writeContent contentsVo string  \t:  " + gson.toJson(contentsVo).toString());
-        
-        // Media Data 리스트 추출
-        List<ContentsMediaVO> contMediaList = (List<ContentsMediaVO>)contentsVo.getContentsMedia();
-        
-        JsonObject json = null; 
+    	MultipartHttpServletRequest multipartHttpServletRequest = (MultipartHttpServletRequest)request;
+    	log.debug("PORK_LOG >>> writeContent Request param  \t:  " + multipartHttpServletRequest.getInputStream().toString());    	
+    	        
+        JsonObject json = new JsonObject();
         
         try {
-        	        	
-        	int wirteResult = 0;
-        	Map<String,Object> retMap;
         	
-        	// contents table에 데이터 등록
-        	try {
-        		wirteResult = porkService.writeContent(contentsVo);
-        	}
-        	catch (Exception e){
-        		e.printStackTrace();
-        	}
-            
-        	log.debug("PORK_LOG >>> writeContent wirteResult  \t:  " + wirteResult);
-        	
-        	if (wirteResult == 1) {
-        		
-        		// 등록된 table에서 contents id 조회
-    	        retMap = porkService.getContId(contentsVo);        	
-        		
-        		if (contMediaList.size() > 0) {
-        			
-        			Iterator it = contMediaList.iterator();
-            		
-                	while(it.hasNext()) {
-                		
-                		ContentsMediaVO contentsMediaVo = (ContentsMediaVO)it.next();
-                		contentsMediaVo.setContId(String.valueOf(retMap.get("contId")));
-                		contentsMediaVo.setContType(contentsVo.getContType());
-                		
-                		// 조회된 content id로 contents_media 테이블 데이터 등록
-            	        wirteResult = porkService.writeContentMedia(contentsMediaVo);
-
-                	}
-                	
-                	json = new JsonObject();
-                	json.addProperty("result_mgs", "success");
-                	json.addProperty("result_code", "9999");
-                	
-        		}
-        	}
-        	else {
-        		json = new JsonObject();
-            	json.addProperty("result_mgs", "Contents Upload Fail");
-            	json.addProperty("result_code", "9999");
-        	}
-        }
-        catch (Exception e) {
-        	e.printStackTrace();
-        	
-        	if (json == null) {
-        		json = new JsonObject();
-        	}
+	        if(porkService.fileUpload(multipartHttpServletRequest)) {
+	        	json.addProperty("result_mgs", "Contents Upload Success");
+            	json.addProperty("result_code", "S0000");	        	
+	    	}
+	        else {
+	        	json.addProperty("result_mgs", "Contents Upload Fail");
+            	json.addProperty("result_code", "E0003");
+	        }
+        } catch (Exception e) {
         	
         	json.addProperty("result_mgs", e.getMessage());
-        	json.addProperty("result_code", "9999");
+        	json.addProperty("result_code", "E9999");
+        	log.debug("PORK_LOG >>> 이미지 업로드 오류", e.getCause());
+        	log.debug("PORK_LOG >>> 이미지 업로드 오류" + e.getMessage());
+        	e.printStackTrace();
         }
         finally {
         	response.setContentType("application/json");
@@ -208,7 +158,6 @@ public class PorkController {
             response.getWriter().write(json.toString());
         }
         
-    	
         // 최종 결과 return
         
     	log.info("PORK_LOG >>> writeContent END >>> ");
@@ -217,13 +166,11 @@ public class PorkController {
     
     /**
      * 
-     * @param commandMap
-     * @return Map
+     * @param request
+     * @return response
      * @throws Exception
      * @since  2016.03.27
      * @author thomas
-     * @return 
-     * @refer url : http://addio3305.tistory.com/79
      * Description 사용자가 이미 등록되었는지 회원가입시 체크
      */
     @RequestMapping(value="/api/checkUser.do", method = RequestMethod.POST)
@@ -237,52 +184,49 @@ public class PorkController {
         log.debug("PORK_LOG >>> checkUser Request param  \t:  " + param);
         
     	// API형대로 제공될 것이므로 JSON 타입으로 요청받은 정보를 서비스에 맞게 Map 데이터로 변경함
-    	JSONObject jObj = new JSONObject(param); // this parses the json
-    	Iterator it = jObj.keys(); //gets all the keys
-    	
-    	Map<String, Object> commandMap = (Map<String, Object>)new HashMap();
-    	
-    	while(it.hasNext()) {
-    		
-    	    String key = String.valueOf(it.next()); // 키
-    	    Object o = jObj.get(key);               // 키값 
-    	    commandMap.put(key, o);                 // param으로 저장
-
-    	} 
-    	
+    	UserVO userVo = gson.fromJson(param, UserVO.class);
+    	    	
     	// 처리 결과 리턴 값
-        Map<String,Object> retMap = porkService.checkUser(commandMap);
+    	JsonObject json = new JsonObject(); 
+    	try {
+    		
+	        int ret = porkService.checkUser(userVo);
+	        
+	        if (ret == 0) {
+	        	log.info("PORK_LOG >>> checkUser Response Param [" + ret + "]");
+	        	json.addProperty("result_mgs", "success");
+	        	json.addProperty("result_code", "S0000");
+	        }
+	        else {
+	        	json.addProperty("result_mgs", "email address has already");
+	        	json.addProperty("result_code", "E0004");
+	        }
+    	} 
+    	catch (Exception e) {
+    		
+    		json.addProperty("result_mgs", e.getMessage());
+        	json.addProperty("result_code", "E9999");
+        	log.debug("PORK_LOG >>> 회원가입체크 오류", e.getCause());
+        	log.debug("PORK_LOG >>> 회원가입체크 오류" + e.getMessage());
+    		e.printStackTrace();
+    	}
+    	finally {
+    		response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(json.toString());
+    	}
         
-        JsonObject json = null; 
-        
-        if (retMap != null) {
-        	log.info("PORK_LOG >>> checkUser Response Param [" + retMap.toString() + "]");
-        	json = new JsonParser().parse(retMap.toString()).getAsJsonObject();
-        	log.info("PORK_LOG >>> checkUser Response json [" + json.toString() + "]");
-        	json.addProperty("result_mgs", "success");
-        	json.addProperty("result_code", "0000");
-        }
-        else {
-        	json = new JsonObject();
-        	json.addProperty("result_mgs", "data not found");
-        	json.addProperty("result_code", "9999");
-        }
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(json.toString());
         
         log.info("PORK_LOG >>> checkUser END >>>");
     }
     
     /**
      * 
-     * @param commandMap
-     * @return Map
+     * @param request
+     * @return response
      * @throws Exception
      * @since  2016.04.03
      * @author thomas
-     * @refer url : http://addio3305.tistory.com/79
      * Description : 회원가입 데이터 처리
      */
     @RequestMapping(value="/api/joinUser.do", method = RequestMethod.POST)
@@ -292,54 +236,45 @@ public class PorkController {
     	
     	// Request 객체에서 JSON Parameter 추출
     	String param = null;
-        
         param = util.getReqData(request);
-        
         log.debug("PORK_LOG >>> joinUser Request param  \t:  " + param);
         
     	// API형대로 제공될 것이므로 JSON 타입으로 요청받은 정보를 서비스에 맞게 Map 데이터로 변경함
-    	JSONObject jObj = new JSONObject(param); // this parses the json
-    	Iterator it = jObj.keys(); //gets all the keys
-    	
-    	Map<String, Object> commandMap = (Map<String, Object>)new HashMap();
-    	
-    	while(it.hasNext()) {
-    		
-    	    String key = String.valueOf(it.next()); // 키
-    	    Object o = jObj.get(key);               // 키값 
-    	    commandMap.put(key, o);                 // param으로 저장
-
-    	}
+    	UserVO userVo = gson.fromJson(param, UserVO.class);
     	
         // 처리 결과 리턴 값
     	int joinResult = 0;
     	
+    	JsonObject json = new JsonObject();
+    	
     	try {
-    		joinResult = porkService.joinUser(commandMap);
+    		joinResult = porkService.joinUser(userVo);
+    		
+    		log.info("PORK_LOG >>> joinResult Param [" + joinResult + "]");
+    		            
+            if (joinResult == 1) {        	
+            	json.addProperty("result_mgs", "success");
+            	json.addProperty("result_code", "S0000");
+            }
+            else {
+            	json.addProperty("result_mgs", "fail");
+            	json.addProperty("result_code", "E0005");
+            }
     	}
     	catch (Exception e) {
-    		log.info("PORK_LOG >>> joinResult Exception [" + e.getMessage() + "]");
+    		
+    		json.addProperty("result_mgs", e.getMessage());
+        	json.addProperty("result_code", "E9999");
+        	log.debug("PORK_LOG >>> 회원가입 오류", e.getCause());
+        	log.debug("PORK_LOG >>> 회원가입 오류" + e.getMessage());
     		e.printStackTrace();
     	}
+    	finally {
+    		response.setContentType("application/json");
+            response.setCharacterEncoding("UTF-8");
+            response.getWriter().write(json.toString());
+    	}
     	
-    	log.info("PORK_LOG >>> joinResult Param [" + joinResult + "]");
-    	
-    	// Map Data를 JSON 값으로 치환
-    	JSONObject json = new JSONObject();
-        
-        if (joinResult == 1) {        	
-        	json.put("result_mgs", "success");
-        	json.put("result_code", "0000");
-        }
-        else {
-        	json.put("result_mgs", "fail");
-        	json.put("result_code", "9999");
-        }
-        
-        response.setContentType("application/json");
-        response.setCharacterEncoding("UTF-8");
-        response.getWriter().write(json.toString());
-        
         log.info("PORK_LOG >>> joinUser END >>>");
         
     }

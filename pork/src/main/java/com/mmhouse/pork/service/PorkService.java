@@ -3,6 +3,8 @@ package com.mmhouse.pork.service;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.web.multipart.MultipartHttpServletRequest;
+
 import com.mmhouse.pork.vo.ContentsMediaVO;
 import com.mmhouse.pork.vo.ContentsVO;
 import com.mmhouse.pork.vo.UserVO;
@@ -18,12 +20,12 @@ public interface PorkService {
 	/*
 	 * 회원가입 이메일 중복 체크
 	 */
-	Map<String, Object> checkUser(Map<String, Object> commandMap);
+	int checkUser(UserVO userVo);
 	
 	/*
 	 * 회원가입 처리
 	 */
-	int joinUser(Map<String, Object> commandMap);
+	int joinUser(UserVO userVo);
 	
 	
 	/*
@@ -40,5 +42,10 @@ public interface PorkService {
 	 * content media등록 
 	 */
 	int writeContentMedia(ContentsMediaVO contentsMediaVo);
+	
+	/*
+	 * content file upload
+	 */
+	boolean fileUpload(MultipartHttpServletRequest request);
 	
 }
